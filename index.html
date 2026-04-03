@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Snake Game</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ÉCRAN D'ACCUEIL -->
+  <div id="screen-menu" class="screen active">
+    <div class="menu-bg"></div>
+    <div class="menu-content">
+      <h1 class="game-title">
+        <span class="title-snake">SNAKE</span>
+        <span class="title-sub">RELOADED</span>
+      </h1>
+      <div class="skin-picker">
+        <p class="label">Choisir un skin</p>
+        <div class="skins">
+          <button class="skin-btn active" data-skin="classic" title="Classic">
+            <span class="skin-preview classic"></span>
+            Classic
+          </button>
+          <button class="skin-btn" data-skin="neon" title="Neon">
+            <span class="skin-preview neon"></span>
+            Neon
+          </button>
+          <button class="skin-btn" data-skin="fire" title="Fire">
+            <span class="skin-preview fire"></span>
+            Fire
+          </button>
+          <button class="skin-btn" data-skin="ice" title="Ice">
+            <span class="skin-preview ice"></span>
+            Ice
+          </button>
+        </div>
+      </div>
+      <div class="difficulty-picker">
+        <p class="label">Difficulté</p>
+        <div class="difficulties">
+          <button class="diff-btn" data-speed="120">Facile</button>
+          <button class="diff-btn active" data-speed="80">Normal</button>
+          <button class="diff-btn" data-speed="50">Rapide</button>
+          <button class="diff-btn" data-speed="30">Insane</button>
+        </div>
+      </div>
+      <button id="btn-play" class="btn-primary">▶ JOUER</button>
+      <div class="highscore-display">
+        🏆 Meilleur score : <span id="best-score-menu">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉCRAN DE JEU -->
+  <div id="screen-game" class="screen">
+    <div class="game-wrapper">
+      <header class="game-header">
+        <button id="btn-back" class="icon-btn" title="Menu">⬅</button>
+        <div class="score-box">
+          <span class="score-label">SCORE</span>
+          <span id="score-value">0</span>
+        </div>
+        <div class="score-box">
+          <span class="score-label">MEILLEUR</span>
+          <span id="best-score-value">0</span>
+        </div>
+        <div class="score-box">
+          <span class="score-label">NIVEAU</span>
+          <span id="level-value">1</span>
+        </div>
+        <button id="btn-pause" class="icon-btn" title="Pause">⏸</button>
+      </header>
+
+      <div class="canvas-container">
+        <canvas id="game-canvas" width="400" height="400"></canvas>
+        <!-- Overlay pause -->
+        <div id="pause-overlay" class="overlay hidden">
+          <div class="overlay-box">
+            <p class="overlay-title">PAUSE</p>
+            <button id="btn-resume" class="btn-primary small">▶ Reprendre</button>
+            <button id="btn-menu-from-pause" class="btn-secondary small">⬅ Menu</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contrôles mobile -->
+      <div class="mobile-controls">
+        <div class="ctrl-row">
+          <button class="ctrl-btn" id="ctrl-up">▲</button>
+        </div>
+        <div class="ctrl-row">
+          <button class="ctrl-btn" id="ctrl-left">◀</button>
+          <button class="ctrl-btn" id="ctrl-down">▼</button>
+          <button class="ctrl-btn" id="ctrl-right">▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉCRAN GAME OVER -->
+  <div id="screen-gameover" class="screen">
+    <div class="gameover-content">
+      <h2 class="gameover-title">GAME OVER</h2>
+      <div class="gameover-stats">
+        <div class="stat">
+          <span class="stat-label">Score</span>
+          <span id="final-score" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Meilleur</span>
+          <span id="final-best" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Niveau</span>
+          <span id="final-level" class="stat-value">1</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Pommes</span>
+          <span id="final-apples" class="stat-value">0</span>
+        </div>
+      </div>
+      <div id="new-record-badge" class="hidden">🏆 NOUVEAU RECORD !</div>
+      <div class="gameover-buttons">
+        <button id="btn-retry" class="btn-primary">🔄 Rejouer</button>
+        <button id="btn-menu-from-go" class="btn-secondary">⬅ Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
