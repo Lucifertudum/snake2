@@ -1,136 +1,263 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Snake Game</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>SERPENTIS — Ultimate Snake</title>
+  <link rel="stylesheet" href="css/main.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- ÉCRAN D'ACCUEIL -->
-  <div id="screen-menu" class="screen active">
-    <div class="menu-bg"></div>
-    <div class="menu-content">
-      <h1 class="game-title">
-        <span class="title-snake">SNAKE</span>
-        <span class="title-sub">RELOADED</span>
-      </h1>
-      <div class="skin-picker">
-        <p class="label">Choisir un skin</p>
-        <div class="skins">
-          <button class="skin-btn active" data-skin="classic" title="Classic">
-            <span class="skin-preview classic"></span>
-            Classic
-          </button>
-          <button class="skin-btn" data-skin="neon" title="Neon">
-            <span class="skin-preview neon"></span>
-            Neon
-          </button>
-          <button class="skin-btn" data-skin="fire" title="Fire">
-            <span class="skin-preview fire"></span>
-            Fire
-          </button>
-          <button class="skin-btn" data-skin="ice" title="Ice">
-            <span class="skin-preview ice"></span>
-            Ice
-          </button>
-        </div>
+<!-- ===================== MENU PRINCIPAL ===================== -->
+<div id="screen-menu" class="screen active">
+  <canvas id="bg-canvas"></canvas>
+  <div class="menu-ui">
+    <div class="logo-block">
+      <div class="logo-icon">🐍</div>
+      <h1 class="logo-text">SERPENTIS</h1>
+      <p class="logo-sub">THE ULTIMATE SNAKE EXPERIENCE</p>
+    </div>
+
+    <div class="menu-coins">
+      <span class="coin-icon">◈</span>
+      <span id="menu-coins-val">0</span>
+      <span class="coin-label">coins</span>
+    </div>
+
+    <nav class="main-nav">
+      <button class="nav-btn primary" id="btn-play-menu">
+        <span class="nav-icon">▶</span> JOUER
+      </button>
+      <button class="nav-btn" id="btn-shop-menu">
+        <span class="nav-icon">🛒</span> BOUTIQUE
+      </button>
+      <button class="nav-btn" id="btn-modes-menu">
+        <span class="nav-icon">⚡</span> MODES DE JEU
+      </button>
+      <button class="nav-btn" id="btn-leaderboard-menu">
+        <span class="nav-icon">🏆</span> CLASSEMENT
+      </button>
+    </nav>
+
+    <div class="menu-skin-preview">
+      <span class="preview-label">Skin actuel :</span>
+      <canvas id="skin-preview-canvas" width="40" height="40"></canvas>
+      <span id="skin-preview-name">Classic</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SÉLECTION MODE ===================== -->
+<div id="screen-modes" class="screen">
+  <div class="modal-wrap">
+    <div class="modal-box wide">
+      <button class="modal-close" id="btn-modes-close">✕</button>
+      <h2 class="modal-title">MODES DE JEU</h2>
+      <div class="modes-grid">
+        <button class="mode-card active" data-mode="classic">
+          <div class="mode-icon">🟩</div>
+          <div class="mode-name">CLASSIQUE</div>
+          <div class="mode-desc">Grille bloc par bloc, le grand classique</div>
+          <div class="mode-badge selected">✓ Sélectionné</div>
+        </button>
+        <button class="mode-card" data-mode="smooth">
+          <div class="mode-icon">🌊</div>
+          <div class="mode-name">SMOOTH</div>
+          <div class="mode-desc">Mouvement libre et fluide sur le canvas</div>
+        </button>
+        <button class="mode-card" data-mode="portal">
+          <div class="mode-icon">🌀</div>
+          <div class="mode-name">PORTAILS</div>
+          <div class="mode-desc">Traversez les murs, réapparaissez de l'autre côté</div>
+        </button>
+        <button class="mode-card" data-mode="blitz">
+          <div class="mode-icon">⚡</div>
+          <div class="mode-name">BLITZ</div>
+          <div class="mode-desc">60 secondes, le plus de pommes possible</div>
+        </button>
+        <button class="mode-card" data-mode="maze">
+          <div class="mode-icon">🧱</div>
+          <div class="mode-name">LABYRINTHE</div>
+          <div class="mode-desc">Obstacles générés aléatoirement</div>
+        </button>
+        <button class="mode-card" data-mode="zen">
+          <div class="mode-icon">☯</div>
+          <div class="mode-name">ZEN</div>
+          <div class="mode-desc">Pas de game over, score infini, détente</div>
+        </button>
       </div>
-      <div class="difficulty-picker">
-        <p class="label">Difficulté</p>
-        <div class="difficulties">
-          <button class="diff-btn" data-speed="120">Facile</button>
-          <button class="diff-btn active" data-speed="80">Normal</button>
-          <button class="diff-btn" data-speed="50">Rapide</button>
-          <button class="diff-btn" data-speed="30">Insane</button>
-        </div>
+      <button class="btn-primary large" id="btn-start-mode">▶ LANCER CE MODE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== BOUTIQUE ===================== -->
+<div id="screen-shop" class="screen">
+  <div class="modal-wrap">
+    <div class="modal-box wide shop-box">
+      <button class="modal-close" id="btn-shop-close">✕</button>
+      <h2 class="modal-title">BOUTIQUE</h2>
+      <div class="shop-balance">
+        <span class="coin-icon">◈</span>
+        <span id="shop-coins-val">0</span> coins disponibles
       </div>
-      <button id="btn-play" class="btn-primary">▶ JOUER</button>
-      <div class="highscore-display">
-        🏆 Meilleur score : <span id="best-score-menu">0</span>
+      <div class="shop-grid" id="shop-grid">
+        <!-- généré par JS -->
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ÉCRAN DE JEU -->
-  <div id="screen-game" class="screen">
-    <div class="game-wrapper">
-      <header class="game-header">
-        <button id="btn-back" class="icon-btn" title="Menu">⬅</button>
-        <div class="score-box">
-          <span class="score-label">SCORE</span>
-          <span id="score-value">0</span>
-        </div>
-        <div class="score-box">
-          <span class="score-label">MEILLEUR</span>
-          <span id="best-score-value">0</span>
-        </div>
-        <div class="score-box">
-          <span class="score-label">NIVEAU</span>
-          <span id="level-value">1</span>
-        </div>
-        <button id="btn-pause" class="icon-btn" title="Pause">⏸</button>
-      </header>
-
-      <div class="canvas-container">
-        <canvas id="game-canvas" width="400" height="400"></canvas>
-        <!-- Overlay pause -->
-        <div id="pause-overlay" class="overlay hidden">
-          <div class="overlay-box">
-            <p class="overlay-title">PAUSE</p>
-            <button id="btn-resume" class="btn-primary small">▶ Reprendre</button>
-            <button id="btn-menu-from-pause" class="btn-secondary small">⬅ Menu</button>
-          </div>
-        </div>
+<!-- ===================== LEADERBOARD ===================== -->
+<div id="screen-leaderboard" class="screen">
+  <div class="modal-wrap">
+    <div class="modal-box">
+      <button class="modal-close" id="btn-lb-close">✕</button>
+      <h2 class="modal-title">🏆 CLASSEMENT LOCAL</h2>
+      <div class="lb-tabs">
+        <button class="lb-tab active" data-mode="classic">Classique</button>
+        <button class="lb-tab" data-mode="smooth">Smooth</button>
+        <button class="lb-tab" data-mode="blitz">Blitz</button>
+        <button class="lb-tab" data-mode="maze">Labyrinthe</button>
       </div>
-
-      <!-- Contrôles mobile -->
-      <div class="mobile-controls">
-        <div class="ctrl-row">
-          <button class="ctrl-btn" id="ctrl-up">▲</button>
-        </div>
-        <div class="ctrl-row">
-          <button class="ctrl-btn" id="ctrl-left">◀</button>
-          <button class="ctrl-btn" id="ctrl-down">▼</button>
-          <button class="ctrl-btn" id="ctrl-right">▶</button>
-        </div>
+      <div id="lb-list" class="lb-list">
+        <!-- généré par JS -->
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ÉCRAN GAME OVER -->
-  <div id="screen-gameover" class="screen">
-    <div class="gameover-content">
-      <h2 class="gameover-title">GAME OVER</h2>
-      <div class="gameover-stats">
-        <div class="stat">
-          <span class="stat-label">Score</span>
-          <span id="final-score" class="stat-value">0</span>
+<!-- ===================== JEU ===================== -->
+<div id="screen-game" class="screen">
+  <div class="game-layout">
+    <header class="game-hud">
+      <button class="hud-btn" id="hud-back">⬅</button>
+      <div class="hud-info">
+        <div class="hud-stat">
+          <span class="hud-label">SCORE</span>
+          <span class="hud-val" id="hud-score">0</span>
         </div>
-        <div class="stat">
-          <span class="stat-label">Meilleur</span>
-          <span id="final-best" class="stat-value">0</span>
+        <div class="hud-stat">
+          <span class="hud-label">BEST</span>
+          <span class="hud-val accent" id="hud-best">0</span>
         </div>
-        <div class="stat">
-          <span class="stat-label">Niveau</span>
-          <span id="final-level" class="stat-value">1</span>
+        <div class="hud-stat">
+          <span class="hud-label">◈ COINS</span>
+          <span class="hud-val gold" id="hud-coins">0</span>
         </div>
-        <div class="stat">
-          <span class="stat-label">Pommes</span>
-          <span id="final-apples" class="stat-value">0</span>
+        <div class="hud-stat" id="hud-timer-box" style="display:none">
+          <span class="hud-label">⏱ TEMPS</span>
+          <span class="hud-val danger" id="hud-timer">60</span>
+        </div>
+        <div class="hud-stat" id="hud-level-box">
+          <span class="hud-label">NIVEAU</span>
+          <span class="hud-val" id="hud-level">1</span>
         </div>
       </div>
-      <div id="new-record-badge" class="hidden">🏆 NOUVEAU RECORD !</div>
-      <div class="gameover-buttons">
-        <button id="btn-retry" class="btn-primary">🔄 Rejouer</button>
-        <button id="btn-menu-from-go" class="btn-secondary">⬅ Menu</button>
+      <div class="hud-mode-badge" id="hud-mode-badge">CLASSIQUE</div>
+      <button class="hud-btn" id="hud-pause">⏸</button>
+    </header>
+
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="game-canvas"></canvas>
+      <!-- Score popup -->
+      <div class="score-popup" id="score-popup"></div>
+      <!-- Pause overlay -->
+      <div id="pause-overlay" class="game-overlay hidden">
+        <div class="overlay-card">
+          <p class="overlay-title">PAUSE</p>
+          <button class="btn-primary" id="btn-resume">▶ Reprendre</button>
+          <button class="btn-secondary" id="btn-quit-pause">⬅ Quitter</button>
+        </div>
+      </div>
+      <!-- Countdown overlay -->
+      <div id="countdown-overlay" class="game-overlay hidden">
+        <div class="countdown-num" id="countdown-num">3</div>
+      </div>
+    </div>
+
+    <div class="mobile-dpad" id="mobile-dpad">
+      <div class="dpad-row"><button class="dpad-btn" id="d-up">▲</button></div>
+      <div class="dpad-row">
+        <button class="dpad-btn" id="d-left">◀</button>
+        <div class="dpad-center"></div>
+        <button class="dpad-btn" id="d-right">▶</button>
+      </div>
+      <div class="dpad-row"><button class="dpad-btn" id="d-down">▼</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== GAME OVER ===================== -->
+<div id="screen-gameover" class="screen">
+  <div class="modal-wrap">
+    <div class="modal-box gameover-box">
+      <div class="go-snake-anim">🐍</div>
+      <h2 class="go-title" id="go-title">GAME OVER</h2>
+      <div id="go-new-record" class="go-record hidden">✨ NOUVEAU RECORD !</div>
+      <div class="go-stats-grid">
+        <div class="go-stat"><span class="go-stat-label">Score</span><span class="go-stat-val" id="go-score">0</span></div>
+        <div class="go-stat"><span class="go-stat-label">Meilleur</span><span class="go-stat-val accent" id="go-best">0</span></div>
+        <div class="go-stat"><span class="go-stat-label">Niveau</span><span class="go-stat-val" id="go-level">1</span></div>
+        <div class="go-stat"><span class="go-stat-label">◈ Coins</span><span class="go-stat-val gold" id="go-coins-earned">+0</span></div>
+      </div>
+      <div class="go-coins-total">Total coins : <span id="go-coins-total">0</span></div>
+      <div class="go-btns">
+        <button class="btn-primary" id="btn-go-retry">🔄 Rejouer</button>
+        <button class="btn-secondary" id="btn-go-menu">⬅ Menu</button>
+        <button class="btn-secondary" id="btn-go-shop">🛒 Boutique</button>
       </div>
     </div>
   </div>
+</div>
 
-  <script src="game.js"></script>
+<!-- ===================== ADMIN PANEL ===================== -->
+<div id="screen-admin" class="screen">
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-logo">⚙ ADMIN</div>
+      <nav class="admin-nav">
+        <button class="admin-tab active" data-tab="dashboard">📊 Dashboard</button>
+        <button class="admin-tab" data-tab="players">👥 Joueurs</button>
+        <button class="admin-tab" data-tab="shop-mgmt">🛒 Boutique</button>
+        <button class="admin-tab" data-tab="config">⚙ Config</button>
+        <button class="admin-tab" data-tab="cheats">🎮 Cheats</button>
+      </nav>
+      <button class="admin-logout" id="admin-logout">✕ Quitter</button>
+    </aside>
+    <main class="admin-main" id="admin-main">
+      <!-- généré par JS -->
+    </main>
+  </div>
+</div>
+
+<!-- ===================== LOGIN ADMIN ===================== -->
+<div id="screen-admin-login" class="screen">
+  <div class="modal-wrap">
+    <div class="modal-box login-box">
+      <div class="login-icon">🔐</div>
+      <h2 class="modal-title">ADMIN PANEL</h2>
+      <p class="login-sub">Accès restreint</p>
+      <div class="login-form">
+        <input type="password" id="admin-pwd" placeholder="Mot de passe admin" class="admin-input" autocomplete="off"/>
+        <button class="btn-primary" id="btn-admin-login">Connexion</button>
+        <p class="login-error hidden" id="login-error">❌ Mot de passe incorrect</p>
+      </div>
+      <button class="btn-ghost" id="btn-admin-cancel">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Konami code hint caché -->
+<div id="admin-hint" style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:.15;color:#fff;pointer-events:none;font-family:monospace;">↑↑↓↓←→←→BA = admin</div>
+
+<script src="js/storage.js"></script>
+<script src="js/skins.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/game.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

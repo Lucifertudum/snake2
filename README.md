@@ -1,76 +1,82 @@
-# 🐍 Snake Reloaded
+# 🐍 SERPENTIS — Ultimate Snake
 
-Un remake du Snake Game en JavaScript vanilla avec un design dark/neon.
+Un Snake Game next-level avec mouvement libre, boutique, modes de jeu variés et panel admin.
 
-## 📁 Structure du projet
+## 🌐 Live Demo
+> `https://TON_USERNAME.github.io/snake/`
+
+---
+
+## 📁 Structure
 
 ```
-snake-game/
-├── index.html     ← Structure HTML + liens vers CSS/JS
-├── style.css      ← Tout le CSS (thème, animations, responsive)
-├── game.js        ← Logique du jeu (canvas, boucle, controls)
+snake-ultimate/
+├── index.html
+├── css/
+│   └── main.css
+├── js/
+│   ├── storage.js   — Persistance localStorage
+│   ├── skins.js     — Définition des skins
+│   ├── shop.js      — Boutique
+│   ├── game.js      — Moteur de jeu (tous modes)
+│   ├── admin.js     — Panel admin
+│   └── app.js       — Contrôleur principal
 └── README.md
 ```
 
-## 🚀 Lancer le projet
+---
 
-### Option 1 — Extension Live Server (recommandé)
-1. Ouvre le dossier dans **VS Code**
-2. Installe l'extension **Live Server** (ritwickdey.LiveServer)
-3. Clic droit sur `index.html` → **Open with Live Server**
+## 🎮 Modes de jeu
 
-### Option 2 — Directement
-Double-clique sur `index.html` dans l'explorateur de fichiers.
-
-> ⚠️ Si tu ouvres directement le fichier HTML (protocole `file://`),  
-> certains navigateurs bloquent les polices Google Fonts — utilise Live Server.
+| Mode | Description |
+|------|-------------|
+| 🟩 Classique | Grille bloc par bloc, le grand classique |
+| 🌊 Smooth | Mouvement fluide libre sur le canvas |
+| 🌀 Portails | Traversez les murs, réapparaissez de l'autre côté |
+| ⚡ Blitz | 60 secondes chrono, score max |
+| 🧱 Labyrinthe | Obstacles générés aléatoirement |
+| ☯ Zen | Pas de game over, score infini |
 
 ---
 
-## 🎮 Contrôles
+## 🛒 Boutique
 
-| Action     | Clavier              | Mobile       |
-|------------|----------------------|--------------|
-| Haut       | ↑ ou Z               | Swipe / Bouton |
-| Bas        | ↓ ou S               | Swipe / Bouton |
-| Gauche     | ← ou Q               | Swipe / Bouton |
-| Droite     | → ou D               | Swipe / Bouton |
-| Pause      | Espace / Échap       | Bouton ⏸     |
+9 skins (Common → Legendary) déblocables avec des coins gagnés en jouant.
 
 ---
 
-## ✨ Fonctionnalités
+## 🔐 Panel Admin
 
-- 4 skins : Classic, Neon, Fire, Ice
-- 4 niveaux de difficulté
-- Score + meilleur score (sauvegardé en localStorage)
-- Montée de niveau automatique tous les 5 pommes
-- Particules d'explosion à chaque pomme mangée
-- Yeux animés sur la tête du serpent
-- Grille, halo pulsant, effets glow
-- Contrôles swipe sur mobile
-- Pause en jeu
+**Accès :** Code Konami `↑↑↓↓←→←→BA` ou via le hint discret en bas à droite.  
+**Mot de passe :** `SERPENTIS2024`
+
+Fonctionnalités :
+- Dashboard avec statistiques complètes
+- Historique des scores
+- Gestion des skins et coins
+- Configuration du jeu (vitesse, coins, événements)
+- Cheats (coins illimités, déblocage, etc.)
 
 ---
 
-## 🎨 Personnalisation facile
+## 🎯 Contrôles
 
-Dans **`style.css`**, modifie les variables CSS au début du fichier :
+| Action | Clavier | Mobile |
+|--------|---------|--------|
+| Diriger | ↑↓←→ ou ZQSD | D-pad / Swipe |
+| Pause | Espace / Échap | Bouton ⏸ |
 
-```css
-:root {
-  --bg:      #0a0a0f;   /* Couleur de fond principale */
-  --accent:  #00ff88;   /* Couleur principale verte */
-  --accent2: #00ccff;   /* Couleur secondaire bleue */
-  --danger:  #ff4466;   /* Couleur rouge (Game Over) */
-}
+---
+
+## 🚀 Mise en ligne sur GitHub Pages
+
+```bash
+git init
+git add .
+git commit -m "🐍 SERPENTIS ultimate snake"
+git branch -M main
+git remote add origin https://github.com/USERNAME/snake.git
+git push -u origin main
 ```
 
-Dans **`game.js`**, modifie les skins :
-
-```js
-const SKINS = {
-  classic: { head: '#00ff88', body: '#00cc66', food: '#ff4466', glow: 'rgba(0,255,136,' },
-  // Ajoute tes propres skins ici !
-};
-```
+Puis **Settings → Pages → Deploy from main branch**.
