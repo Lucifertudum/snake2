@@ -658,5 +658,5 @@ const Game = (() => {
     ctx.closePath();
   }
 
-  return { init, stop, togglePause, resize };
-})();
+return { init, stop, togglePause, resize };
+}; // <-- si c'est une const/let/var
