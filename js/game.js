@@ -658,4 +658,5 @@ const Game = (() => {
     ctx.closePath();
   }
 
+  return { init, stop, togglePause, resize };
 })();
