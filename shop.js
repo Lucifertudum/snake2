@@ -4,13 +4,13 @@
 const Shop = (() => {
   function render() {
     const grid = document.getElementById('shop-grid');
-    const coins = Storage.get('coins');
+    const coins = Accounts.getCoins();
     document.getElementById('shop-coins-val').textContent = coins;
 
     grid.innerHTML = '';
     SKINS_DATA.forEach(skin => {
-      const owned    = Storage.hasSkin(skin.id);
-      const equipped = Storage.get('equippedSkin') === skin.id;
+      const owned    = Accounts.hasSkin(skin.id);
+      const equipped = Accounts.getEquippedSkin() === skin.id;
       const canBuy   = coins >= skin.price && !owned;
 
       const item = document.createElement('div');
@@ -70,19 +70,19 @@ const Shop = (() => {
   }
 
   function buySkin(id, price) {
-    if (!Storage.removeCoins(price)) {
+    if (!Accounts.removeCoins(price)) {
       flashMessage('Pas assez de coins !', 'danger');
       return;
     }
-    Storage.unlockSkin(id);
-    Storage.equipSkin(id);
+    Accounts.unlockSkin(id);
+    Accounts.equipSkin(id);
     updateMenuCoins();
     render();
     flashMessage('Skin acheté et équipé !', 'success');
   }
 
   function equipSkin(id) {
-    Storage.equipSkin(id);
+    Accounts.equipSkin(id);
     updateMenuCoins();
     render();
     // Mettre à jour la preview menu

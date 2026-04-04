@@ -3,15 +3,66 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-  <title>SERPENTIS — Ultimate Snake</title>
+  <title>SERPENTIS — Ultimate Snake v3</title>
   <link rel="stylesheet" href="css/main.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
 </head>
 <body>
 
+<!-- ===================== AUTH ===================== -->
+<div id="screen-auth" class="screen">
+  <div class="auth-container">
+    <div class="auth-logo">
+      <span class="auth-logo-icon">🐍</span>
+      <div class="auth-logo-text">SERPENTIS</div>
+      <div class="auth-logo-sub">THE ULTIMATE SNAKE EXPERIENCE</div>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" data-tab="login">SE CONNECTER</button>
+      <button class="auth-tab-btn" data-tab="register">CRÉER UN COMPTE</button>
+    </div>
+
+    <!-- Login -->
+    <div id="auth-login-form">
+      <div class="auth-field">
+        <label>Pseudo</label>
+        <input type="text" id="login-username" class="auth-input" placeholder="Ton pseudo" autocomplete="username"/>
+      </div>
+      <div class="auth-field">
+        <label>Mot de passe</label>
+        <input type="password" id="login-password" class="auth-input" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <button class="auth-btn" id="btn-do-login">▶ CONNEXION</button>
+    </div>
+
+    <!-- Register -->
+    <div id="auth-register-form" class="hidden">
+      <div class="auth-field">
+        <label>Pseudo (2–20 caractères)</label>
+        <input type="text" id="reg-username" class="auth-input" placeholder="Choisis ton pseudo" autocomplete="off" maxlength="20"/>
+      </div>
+      <div class="auth-avatar-label">Choisis ton avatar</div>
+      <div id="avatar-picker"></div>
+      <div class="auth-field">
+        <label>Mot de passe (min. 4 caractères)</label>
+        <input type="password" id="reg-password" class="auth-input" placeholder="••••••••" autocomplete="new-password"/>
+      </div>
+      <div class="auth-field">
+        <label>Confirmer le mot de passe</label>
+        <input type="password" id="reg-confirm" class="auth-input" placeholder="••••••••" autocomplete="new-password"/>
+      </div>
+      <button class="auth-btn" id="btn-do-register">🎮 CRÉER MON COMPTE</button>
+    </div>
+
+    <p id="auth-error"></p>
+    <button class="auth-guest-btn" id="btn-guest">👤 Jouer en tant qu'invité</button>
+  </div>
+</div>
+
 <!-- ===================== MENU PRINCIPAL ===================== -->
-<div id="screen-menu" class="screen active">
+<div id="screen-menu" class="screen">
   <canvas id="bg-canvas"></canvas>
   <div class="menu-ui">
     <div class="logo-block">
@@ -20,36 +71,39 @@
       <p class="logo-sub">THE ULTIMATE SNAKE EXPERIENCE</p>
     </div>
 
-    <div class="menu-coins">
-      <span class="coin-icon">◈</span>
-      <span id="menu-coins-val">0</span>
-      <span class="coin-label">coins</span>
-    </div>
+    <!-- Profil connecté -->
+    <div id="menu-profile-block"></div>
 
     <nav class="main-nav">
       <button class="nav-btn primary" id="btn-play-menu">
         <span class="nav-icon">▶</span> JOUER
       </button>
-      <button class="nav-btn" id="btn-shop-menu">
-        <span class="nav-icon">🛒</span> BOUTIQUE
-      </button>
       <button class="nav-btn" id="btn-modes-menu">
         <span class="nav-icon">⚡</span> MODES DE JEU
+      </button>
+      <button class="nav-btn" id="btn-shop-menu">
+        <span class="nav-icon">🛒</span> BOUTIQUE
       </button>
       <button class="nav-btn" id="btn-leaderboard-menu">
         <span class="nav-icon">🏆</span> CLASSEMENT
       </button>
+      <button class="nav-btn" id="btn-profile-menu">
+        <span class="nav-icon">👤</span> MON PROFIL
+      </button>
+      <button class="nav-btn danger-btn" id="btn-logout-menu">
+        <span class="nav-icon">🚪</span> DÉCONNEXION
+      </button>
     </nav>
 
     <div class="menu-skin-preview">
-      <span class="preview-label">Skin actuel :</span>
+      <span class="preview-label">Skin :</span>
       <canvas id="skin-preview-canvas" width="40" height="40"></canvas>
       <span id="skin-preview-name">Classic</span>
     </div>
   </div>
 </div>
 
-<!-- ===================== SÉLECTION MODE ===================== -->
+<!-- ===================== MODES DE JEU ===================== -->
 <div id="screen-modes" class="screen">
   <div class="modal-wrap">
     <div class="modal-box wide">
@@ -60,32 +114,32 @@
           <div class="mode-icon">🟩</div>
           <div class="mode-name">CLASSIQUE</div>
           <div class="mode-desc">Grille bloc par bloc, le grand classique</div>
-          <div class="mode-badge selected">✓ Sélectionné</div>
+          <div class="mode-badge">✓ Sélectionné</div>
         </button>
         <button class="mode-card" data-mode="smooth">
           <div class="mode-icon">🌊</div>
           <div class="mode-name">SMOOTH</div>
-          <div class="mode-desc">Mouvement libre et fluide sur le canvas</div>
+          <div class="mode-desc">Mouvement libre et fluide</div>
         </button>
         <button class="mode-card" data-mode="portal">
           <div class="mode-icon">🌀</div>
           <div class="mode-name">PORTAILS</div>
-          <div class="mode-desc">Traversez les murs, réapparaissez de l'autre côté</div>
+          <div class="mode-desc">Traversez les murs</div>
         </button>
         <button class="mode-card" data-mode="blitz">
           <div class="mode-icon">⚡</div>
           <div class="mode-name">BLITZ</div>
-          <div class="mode-desc">60 secondes, le plus de pommes possible</div>
+          <div class="mode-desc">60 secondes chrono</div>
         </button>
         <button class="mode-card" data-mode="maze">
           <div class="mode-icon">🧱</div>
           <div class="mode-name">LABYRINTHE</div>
-          <div class="mode-desc">Obstacles générés aléatoirement</div>
+          <div class="mode-desc">Obstacles aléatoires</div>
         </button>
         <button class="mode-card" data-mode="zen">
           <div class="mode-icon">☯</div>
           <div class="mode-name">ZEN</div>
-          <div class="mode-desc">Pas de game over, score infini, détente</div>
+          <div class="mode-desc">Détente infinie</div>
         </button>
       </div>
       <button class="btn-primary large" id="btn-start-mode">▶ LANCER CE MODE</button>
@@ -99,72 +153,111 @@
     <div class="modal-box wide shop-box">
       <button class="modal-close" id="btn-shop-close">✕</button>
       <h2 class="modal-title">BOUTIQUE</h2>
-      <div class="shop-balance">
-        <span class="coin-icon">◈</span>
-        <span id="shop-coins-val">0</span> coins disponibles
-      </div>
-      <div class="shop-grid" id="shop-grid">
-        <!-- généré par JS -->
-      </div>
+      <div class="shop-coins">◈ <span id="shop-coins-val">0</span> coins</div>
+      <div id="shop-grid"></div>
     </div>
   </div>
 </div>
 
-<!-- ===================== LEADERBOARD ===================== -->
+<!-- ===================== CLASSEMENT ===================== -->
 <div id="screen-leaderboard" class="screen">
   <div class="modal-wrap">
-    <div class="modal-box">
+    <div class="modal-box wide">
       <button class="modal-close" id="btn-lb-close">✕</button>
-      <h2 class="modal-title">🏆 CLASSEMENT LOCAL</h2>
+      <h2 class="modal-title">CLASSEMENT</h2>
+      <div class="lb-header">
+        <span id="lb-subtitle">Vos meilleurs scores</span>
+        <div class="lb-toggle-wrap">
+          <button id="lb-global-toggle">👤 Local</button>
+        </div>
+      </div>
       <div class="lb-tabs">
-        <button class="lb-tab active" data-mode="classic">Classique</button>
-        <button class="lb-tab" data-mode="smooth">Smooth</button>
-        <button class="lb-tab" data-mode="blitz">Blitz</button>
-        <button class="lb-tab" data-mode="maze">Labyrinthe</button>
+        <button class="lb-tab active" data-mode="classic">CLASSIQUE</button>
+        <button class="lb-tab" data-mode="smooth">SMOOTH</button>
+        <button class="lb-tab" data-mode="portal">PORTAILS</button>
+        <button class="lb-tab" data-mode="blitz">BLITZ</button>
+        <button class="lb-tab" data-mode="maze">LABYRINTHE</button>
+        <button class="lb-tab" data-mode="zen">ZEN</button>
       </div>
-      <div id="lb-list" class="lb-list">
-        <!-- généré par JS -->
+      <div id="lb-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PROFIL ===================== -->
+<div id="screen-profile" class="screen">
+  <div class="modal-wrap">
+    <div class="modal-box wide profile-box">
+      <button class="modal-close" id="btn-profile-close">✕</button>
+
+      <!-- Header profil -->
+      <div class="profile-header">
+        <div id="profile-avatar-big">🐍</div>
+        <div class="profile-header-info">
+          <span id="profile-username">—</span>
+          <span id="profile-title-badge">Novice</span>
+          <span id="profile-join-date">—</span>
+        </div>
+        <div id="profile-rank">Non classé</div>
       </div>
+
+      <!-- Onglets -->
+      <div class="profile-tabs">
+        <button class="profile-tab active" data-tab="stats">📊 Stats</button>
+        <button class="profile-tab" data-tab="badges">🏅 Badges</button>
+        <button class="profile-tab" data-tab="scores">📈 Scores</button>
+        <button class="profile-tab" data-tab="settings">⚙ Paramètres</button>
+      </div>
+
+      <div id="profile-tab-body"></div>
     </div>
   </div>
 </div>
 
 <!-- ===================== JEU ===================== -->
 <div id="screen-game" class="screen">
-  <div class="game-layout">
-    <header class="game-hud">
-      <button class="hud-btn" id="hud-back">⬅</button>
-      <div class="hud-info">
-        <div class="hud-stat">
-          <span class="hud-label">SCORE</span>
-          <span class="hud-val" id="hud-score">0</span>
-        </div>
-        <div class="hud-stat">
-          <span class="hud-label">BEST</span>
-          <span class="hud-val accent" id="hud-best">0</span>
-        </div>
-        <div class="hud-stat">
-          <span class="hud-label">◈ COINS</span>
-          <span class="hud-val gold" id="hud-coins">0</span>
-        </div>
-        <div class="hud-stat" id="hud-timer-box" style="display:none">
-          <span class="hud-label">⏱ TEMPS</span>
-          <span class="hud-val danger" id="hud-timer">60</span>
-        </div>
-        <div class="hud-stat" id="hud-level-box">
-          <span class="hud-label">NIVEAU</span>
-          <span class="hud-val" id="hud-level">1</span>
-        </div>
-      </div>
-      <div class="hud-mode-badge" id="hud-mode-badge">CLASSIQUE</div>
-      <button class="hud-btn" id="hud-pause">⏸</button>
-    </header>
+  <div class="game-hud">
+    <button class="hud-back" id="hud-back" title="Quitter">⬅</button>
+    <span id="hud-mode-badge">CLASSIC</span>
 
-    <div class="canvas-wrap" id="canvas-wrap">
+    <div class="hud-divider"></div>
+
+    <div class="hud-stat">
+      <span class="hud-label">SCORE</span>
+      <span class="hud-val accent" id="hud-score">0</span>
+    </div>
+    <div class="hud-stat">
+      <span class="hud-label">RECORD</span>
+      <span class="hud-val" id="hud-best">0</span>
+    </div>
+
+    <div class="hud-divider"></div>
+
+    <div class="hud-stat" id="hud-level-box">
+      <span class="hud-label">NIVEAU</span>
+      <span class="hud-val" id="hud-level">1</span>
+    </div>
+    <div class="hud-stat" id="hud-timer-box" style="display:none">
+      <span class="hud-label">TEMPS</span>
+      <span class="hud-val accent" id="hud-timer">60</span>
+    </div>
+
+    <div class="hud-divider"></div>
+
+    <div class="hud-stat">
+      <span class="hud-label">◈</span>
+      <span class="hud-val gold" id="hud-coins">0</span>
+    </div>
+
+    <button class="hud-pause" id="hud-pause" title="Pause">⏸</button>
+  </div>
+
+  <div class="canvas-area">
+    <div id="canvas-wrap">
       <canvas id="game-canvas"></canvas>
-      <!-- Score popup -->
       <div class="score-popup" id="score-popup"></div>
-      <!-- Pause overlay -->
+
+      <!-- Pause -->
       <div id="pause-overlay" class="game-overlay hidden">
         <div class="overlay-card">
           <p class="overlay-title">PAUSE</p>
@@ -172,21 +265,23 @@
           <button class="btn-secondary" id="btn-quit-pause">⬅ Quitter</button>
         </div>
       </div>
-      <!-- Countdown overlay -->
+
+      <!-- Countdown -->
       <div id="countdown-overlay" class="game-overlay hidden">
         <div class="countdown-num" id="countdown-num">3</div>
       </div>
     </div>
+  </div>
 
-    <div class="mobile-dpad" id="mobile-dpad">
-      <div class="dpad-row"><button class="dpad-btn" id="d-up">▲</button></div>
-      <div class="dpad-row">
-        <button class="dpad-btn" id="d-left">◀</button>
-        <div class="dpad-center"></div>
-        <button class="dpad-btn" id="d-right">▶</button>
-      </div>
-      <div class="dpad-row"><button class="dpad-btn" id="d-down">▼</button></div>
+  <!-- D-pad mobile -->
+  <div class="mobile-dpad" id="mobile-dpad">
+    <div class="dpad-row"><button class="dpad-btn" id="d-up">▲</button></div>
+    <div class="dpad-row">
+      <button class="dpad-btn" id="d-left">◀</button>
+      <div class="dpad-center"></div>
+      <button class="dpad-btn" id="d-right">▶</button>
     </div>
+    <div class="dpad-row"><button class="dpad-btn" id="d-down">▼</button></div>
   </div>
 </div>
 
@@ -198,10 +293,10 @@
       <h2 class="go-title" id="go-title">GAME OVER</h2>
       <div id="go-new-record" class="go-record hidden">✨ NOUVEAU RECORD !</div>
       <div class="go-stats-grid">
-        <div class="go-stat"><span class="go-stat-label">Score</span><span class="go-stat-val" id="go-score">0</span></div>
-        <div class="go-stat"><span class="go-stat-label">Meilleur</span><span class="go-stat-val accent" id="go-best">0</span></div>
+        <div class="go-stat"><span class="go-stat-label">Score</span><span class="go-stat-val accent" id="go-score">0</span></div>
+        <div class="go-stat"><span class="go-stat-label">Meilleur</span><span class="go-stat-val" id="go-best">0</span></div>
         <div class="go-stat"><span class="go-stat-label">Niveau</span><span class="go-stat-val" id="go-level">1</span></div>
-        <div class="go-stat"><span class="go-stat-label">◈ Coins</span><span class="go-stat-val gold" id="go-coins-earned">+0</span></div>
+        <div class="go-stat"><span class="go-stat-label">◈ Gagnés</span><span class="go-stat-val gold" id="go-coins-earned">+0</span></div>
       </div>
       <div class="go-coins-total">Total coins : <span id="go-coins-total">0</span></div>
       <div class="go-btns">
@@ -227,13 +322,11 @@
       </nav>
       <button class="admin-logout" id="admin-logout">✕ Quitter</button>
     </aside>
-    <main class="admin-main" id="admin-main">
-      <!-- généré par JS -->
-    </main>
+    <main class="admin-main" id="admin-main"></main>
   </div>
 </div>
 
-<!-- ===================== LOGIN ADMIN ===================== -->
+<!-- ===================== ADMIN LOGIN ===================== -->
 <div id="screen-admin-login" class="screen">
   <div class="modal-wrap">
     <div class="modal-box login-box">
@@ -250,10 +343,10 @@
   </div>
 </div>
 
-<!-- Konami code hint caché -->
-<div id="admin-hint" style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:.15;color:#fff;pointer-events:none;font-family:monospace;">↑↑↓↓←→←→BA = admin</div>
+<!-- Hint konami caché -->
+<div style="position:fixed;bottom:4px;right:8px;font-size:9px;opacity:.1;color:#fff;pointer-events:none;font-family:monospace;">↑↑↓↓←→←→BA</div>
 
-<script src="js/storage.js"></script>
+<script src="js/accounts.js"></script>
 <script src="js/skins.js"></script>
 <script src="js/shop.js"></script>
 <script src="js/game.js"></script>

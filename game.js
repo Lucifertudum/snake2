@@ -36,6 +36,7 @@ const Game = (() => {
   let score      = 0;
   let level      = 1;
   let applesEaten= 0;
+  let gameStartTime = 0;
   let coinsEarned= 0;
   let speed      = 80;
   let lastStep   = 0;
@@ -79,12 +80,12 @@ const Game = (() => {
     particles  = [];
     foods      = [];
     obstacles  = [];
-    skin       = getSkin(Storage.get('equippedSkin'));
-    gameConfig = Storage.getConfig();
+    skin       = getSkin(Accounts.getEquippedSkin());
+    gameConfig = Accounts.getConfig();
     speed      = gameConfig.speedBase || 80;
 
     document.getElementById('hud-mode-badge').textContent = mode.toUpperCase();
-    document.getElementById('hud-best').textContent = Storage.getBest(mode);
+    document.getElementById('hud-best').textContent = Accounts.getBest(mode);
     document.getElementById('hud-timer-box').style.display = mode === 'blitz' ? 'flex' : 'none';
     document.getElementById('hud-level-box').style.display = mode === 'blitz' ? 'none' : 'flex';
 
@@ -98,8 +99,8 @@ const Game = (() => {
 
     updateHUD();
     lastStep = performance.now();
+    gameStartTime = performance.now();
     requestAnimationFrame(loop);
-  }
 
   // ---- GRID MODES ----
   function initGrid() {
@@ -186,7 +187,7 @@ const Game = (() => {
       applesEaten++;
       const c = gameConfig.coinsPerApple * (gameConfig.doubleCoinEvent ? 2 : 1) * (food.bonus ? 3 : 1);
       coinsEarned += c;
-      Storage.addCoins(c);
+      Accounts.addCoins(c);
       spawnParticles(nx * CELL + CELL/2, ny * CELL + CELL/2, skin.particle, food.bonus ? 20 : 12);
       showScorePopup(pts, nx, ny, food.bonus);
       foods.splice(fi, 1);
@@ -196,7 +197,7 @@ const Game = (() => {
         speed = Math.max(speed - 7, 30);
         score += gameConfig.coinsPerLevel * 10;
       }
-      if (score > Storage.getBest(mode)) Storage.saveBest(mode, score, level);
+      if (score > Accounts.getBest(mode)) Accounts.getBest(mode, score, level);
       updateHUD();
     } else {
       snake.pop();
@@ -258,7 +259,7 @@ const Game = (() => {
         applesEaten++;
         const c = gameConfig.coinsPerApple * (gameConfig.doubleCoinEvent ? 2 : 1) * (smoothFood.bonus ? 3 : 1);
         coinsEarned += c;
-        Storage.addCoins(c);
+        Accounts.addCoins(c);
         spawnParticles(smoothFood.x, smoothFood.y, skin.particle, 16);
         showScorePopupXY(pts, smoothFood.x, smoothFood.y, smoothFood.bonus);
         smoothFood = spawnSmoothFood();
@@ -266,7 +267,7 @@ const Game = (() => {
         const tail = smoothSnake[smoothSnake.length - 1];
         for (let i = 0; i < 20; i++) smoothSnake.push({ ...tail });
         if (applesEaten % 5 === 0) { level++; }
-        if (score > Storage.getBest(mode)) Storage.saveBest(mode, score, level);
+        if (score > Accounts.getBest(mode)) Accounts.getBest(mode, score, level);
         updateHUD();
       } else {
         // Shrink tail (maintain length proportional to apples)
@@ -503,8 +504,8 @@ const Game = (() => {
   // ---- HUD ----
   function updateHUD() {
     document.getElementById('hud-score').textContent  = score;
-    document.getElementById('hud-best').textContent   = Math.max(score, Storage.getBest(mode));
-    document.getElementById('hud-coins').textContent  = Storage.get('coins');
+    document.getElementById('hud-best').textContent   = Math.max(score, Accounts.getBest(mode));
+    document.getElementById('hud-coins').textContent  = Accounts.getCoins();
     document.getElementById('hud-level').textContent  = level;
   }
 
@@ -517,19 +518,25 @@ const Game = (() => {
     ctx.fillStyle = 'rgba(239,68,68,.3)';
     ctx.fillRect(0, 0, W, H);
 
-    Storage.updateStats(applesEaten);
-    const isNew = Storage.saveBest(mode, score, level);
+    const gameEndTime = performance.now();
+    const durationSec = Math.round((gameEndTime - (gameStartTime || gameEndTime)) / 1000);
+    const result = Accounts.saveGameResult(mode, score, level, applesEaten, coinsEarned, durationSec);
+    const isNew = result.isNewRecord;
     updateMenuCoins();
 
     setTimeout(() => {
       document.getElementById('go-score').textContent = score;
-      document.getElementById('go-best').textContent  = Storage.getBest(mode);
+      document.getElementById('go-best').textContent  = Accounts.getBest(mode);
       document.getElementById('go-level').textContent = level;
       document.getElementById('go-coins-earned').textContent = '+' + coinsEarned;
-      document.getElementById('go-coins-total').textContent  = Storage.get('coins');
+      document.getElementById('go-coins-total').textContent  = Accounts.getCoins();
       document.getElementById('go-new-record').classList.toggle('hidden', !isNew);
       document.getElementById('go-title').textContent = mode === 'blitz' ? 'TEMPS ÉCOULÉ !' : 'GAME OVER';
       App.showScreen('gameover');
+      // Show new badges
+      if (result.newBadges && result.newBadges.length > 0) {
+        setTimeout(() => App.showBadgeToast(result.newBadges), 800);
+      }
     }, 600);
   }
 

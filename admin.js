@@ -1,342 +1,218 @@
 /* =============================================
-   admin.js — Panel d'administration
-   Mot de passe : SERPENTIS (haché en SHA-256)
+   admin.js — Panel admin multi-comptes v3
+   Konami code ↑↑↓↓←→←→BA pour accéder
 ============================================= */
-
 const Admin = (() => {
-  // SHA-256 du mot de passe "SERPENTIS2024"
-  const PWD_HASH = '7e9b6c5b8f3a2d1e4c7b0a9f8e5d3c6b1a4e7d0c3f6b9a2e5c8d1f4b7a0e3d6c';
-
-  // On utilise un hash simple côté client (suffisant pour GitHub Pages)
-  async function hashPwd(pwd) {
-    const msgBuffer = new TextEncoder().encode(pwd);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray  = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
-  }
-
-  // Session admin (en mémoire seulement, pas de sessionStorage)
+  const ADMIN_PWD = 'SERPENTIS2024';
   let isLogged = false;
+  let currentTab = 'dashboard';
 
   async function tryLogin(pwd) {
-    const hash = await hashPwd(pwd);
-    // Le vrai hash du mot de passe "SERPENTIS2024"
-    // On compare directement — à changer dans la config si besoin
-    const correct = 'SERPENTIS2024';
-    if (pwd === correct) {
-      isLogged = true;
-      return true;
-    }
+    if (pwd === ADMIN_PWD) { isLogged = true; return true; }
     return false;
   }
-
-  function logout() {
-    isLogged = false;
-  }
-
-  // ---- Tabs ----
-  let currentTab = 'dashboard';
+  function logout() { isLogged = false; }
 
   function renderTab(tab) {
     currentTab = tab;
     document.querySelectorAll('.admin-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     const main = document.getElementById('admin-main');
-
     switch(tab) {
       case 'dashboard': main.innerHTML = buildDashboard(); break;
-      case 'players':   main.innerHTML = buildPlayers(); break;
-      case 'shop-mgmt': main.innerHTML = buildShopMgmt(); break;
+      case 'players':   main.innerHTML = buildPlayers(); bindPlayers(); break;
+      case 'shop-mgmt': main.innerHTML = buildShopMgmt(); bindShopMgmt(); break;
       case 'config':    main.innerHTML = buildConfig(); bindConfig(); break;
-      case 'cheats':    main.innerHTML = buildCheats(); bindCheats(); break;
+      case 'cheats':    main.innerHTML = buildCheats(); break;
     }
   }
 
-  // ---- Dashboard ----
   function buildDashboard() {
-    const d = Storage.getAll();
-    const stats = d.stats || {};
-    const bestFlat = Object.entries(d.bestScores || {}).map(([m,s]) => `${m}: ${s}`).join(' · ') || 'Aucun';
+    const players = Accounts.getAllPlayers();
+    const lb = Accounts.getGlobalLeaderboard('all', 200);
+    const totalGames = players.reduce((s,p) => s + (p.stats.gamesPlayed||0), 0);
+    const totalApples = players.reduce((s,p) => s + (p.stats.totalApples||0), 0);
+    const totalCoins = players.reduce((s,p) => s + (p.stats.totalCoinsEarned||0), 0);
+    const bestScore = players.reduce((m,p) => Math.max(m, p.stats.bestScore||0), 0);
+    const cfg = Accounts.getConfig();
 
-    const allScores = Object.values(d.allTimeScores || {}).flat().map(s => s.score);
-    const maxScore  = allScores.length ? Math.max(...allScores) : 0;
-    const avgScore  = allScores.length ? Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length) : 0;
-
-    return `
-      <div class="admin-section-title">📊 TABLEAU DE BORD</div>
-      <div class="admin-cards">
-        <div class="admin-card">
-          <div class="admin-card-label">Parties jouées</div>
-          <div class="admin-card-val">${stats.gamesPlayed || 0}</div>
-        </div>
-        <div class="admin-card">
-          <div class="admin-card-label">Total pommes</div>
-          <div class="admin-card-val success">${stats.totalApples || 0}</div>
-        </div>
-        <div class="admin-card">
-          <div class="admin-card-label">Coins total</div>
-          <div class="admin-card-val gold">${stats.totalCoins || 0}</div>
-        </div>
-        <div class="admin-card">
-          <div class="admin-card-label">Coins actuels</div>
-          <div class="admin-card-val gold">${d.coins || 0}</div>
-        </div>
-        <div class="admin-card">
-          <div class="admin-card-label">Meilleur score</div>
-          <div class="admin-card-val">${maxScore}</div>
-        </div>
-        <div class="admin-card">
-          <div class="admin-card-label">Score moyen</div>
-          <div class="admin-card-val">${avgScore}</div>
-        </div>
-        <div class="admin-card">
-          <div class="admin-card-label">Skins possédés</div>
-          <div class="admin-card-val">${(d.ownedSkins || []).length} / ${SKINS_DATA.length}</div>
-        </div>
-        <div class="admin-card">
-          <div class="admin-card-label">Skin équipé</div>
-          <div class="admin-card-val" style="font-size:.9rem">${d.equippedSkin || 'classic'}</div>
-        </div>
-      </div>
-      <div class="admin-section-title" style="margin-top:20px">🏆 RECORDS PAR MODE</div>
-      <table class="admin-table">
-        <thead><tr><th>Mode</th><th>Meilleur score</th><th>Parties</th></tr></thead>
-        <tbody>
-          ${['classic','smooth','portal','blitz','maze','zen'].map(m => `
-            <tr>
-              <td>${m.toUpperCase()}</td>
-              <td style="color:var(--accent);font-family:var(--font-hd)">${d.bestScores?.[m] || 0}</td>
-              <td>${(d.allTimeScores?.[m] || []).length}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
-  }
-
-  // ---- Players (top scores) ----
-  function buildPlayers() {
-    const d = Storage.getAll();
-    const allEntries = [];
-    Object.entries(d.allTimeScores || {}).forEach(([mode, scores]) => {
-      scores.forEach(s => allEntries.push({ mode, ...s }));
+    const modeStats = ['classic','smooth','portal','blitz','maze','zen'].map(m => {
+      const scores = lb.filter(e => e.mode === m);
+      const best = scores.length ? scores[0].score : 0;
+      return { mode: m, count: scores.length, best };
     });
-    allEntries.sort((a,b) => b.score - a.score);
-    const top20 = allEntries.slice(0, 20);
 
     return `
-      <div class="admin-section-title">👥 HISTORIQUE DES SCORES</div>
-      <div style="margin-bottom:12px;display:flex;gap:10px">
-        <button class="admin-action-btn danger" onclick="Admin._clearScores()">🗑 Effacer tout</button>
+      <div class="admin-section-title">📊 TABLEAU DE BORD GLOBAL</div>
+      ${cfg.doubleCoinEvent ? '<div class="admin-event-banner">🎉 ÉVÉNEMENT DOUBLE COINS ACTIF</div>' : ''}
+      <div class="admin-cards">
+        <div class="admin-card"><div class="admin-card-label">Comptes créés</div><div class="admin-card-val">${players.length}</div></div>
+        <div class="admin-card"><div class="admin-card-label">Parties totales</div><div class="admin-card-val">${totalGames}</div></div>
+        <div class="admin-card"><div class="admin-card-label">Pommes mangées</div><div class="admin-card-val success">${totalApples}</div></div>
+        <div class="admin-card"><div class="admin-card-label">Coins distribués</div><div class="admin-card-val gold">${totalCoins}</div></div>
+        <div class="admin-card"><div class="admin-card-label">Meilleur score global</div><div class="admin-card-val accent">${bestScore}</div></div>
+        <div class="admin-card"><div class="admin-card-label">Entrées leaderboard</div><div class="admin-card-val">${lb.length}</div></div>
       </div>
+      <div class="admin-section-title" style="margin-top:20px">🏆 STATS PAR MODE</div>
       <table class="admin-table">
-        <thead><tr><th>#</th><th>Mode</th><th>Score</th><th>Niveau</th><th>Date</th></tr></thead>
+        <thead><tr><th>Mode</th><th>Parties</th><th>Record</th></tr></thead>
         <tbody>
-          ${top20.length ? top20.map((e,i) => `
-            <tr>
-              <td style="color:var(--text-dim)">${i+1}</td>
-              <td>${e.mode.toUpperCase()}</td>
-              <td style="color:var(--accent);font-family:var(--font-hd)">${e.score}</td>
-              <td>${e.level}</td>
-              <td style="color:var(--text-dim)">${e.date || '—'}</td>
-            </tr>
-          `).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px">Aucun score enregistré</td></tr>'}
+          ${modeStats.map(m => `<tr>
+            <td>${m.mode.toUpperCase()}</td>
+            <td style="color:var(--text-dim)">${m.count}</td>
+            <td style="color:var(--accent);font-family:var(--font-hd)">${m.best}</td>
+          </tr>`).join('')}
         </tbody>
       </table>
-    `;
+      <div class="admin-section-title" style="margin-top:20px">🥇 TOP 5 JOUEURS</div>
+      <table class="admin-table">
+        <thead><tr><th>#</th><th>Joueur</th><th>Titre</th><th>Meilleur score</th><th>Parties</th></tr></thead>
+        <tbody>
+          ${players.slice(0,5).map((p,i) => `<tr>
+            <td style="color:var(--text-dim)">${['🥇','🥈','🥉','4','5'][i]}</td>
+            <td>${p.avatar} ${p.username}</td>
+            <td style="font-size:.7rem;color:var(--accent)">${p.title.label}</td>
+            <td style="color:var(--gold);font-family:var(--font-hd)">${p.stats.bestScore||0}</td>
+            <td style="color:var(--text-dim)">${p.stats.gamesPlayed||0}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
   }
 
-  // ---- Shop management ----
+  function buildPlayers() {
+    const players = Accounts.getAllPlayers();
+    return `
+      <div class="admin-section-title">👥 GESTION DES JOUEURS (${players.length})</div>
+      <table class="admin-table">
+        <thead><tr><th>Joueur</th><th>Titre</th><th>Score</th><th>Parties</th><th>Coins</th><th>Badges</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${players.length ? players.map(p => `<tr>
+            <td>${p.avatar} <strong>${p.username}</strong></td>
+            <td style="font-size:.7rem;color:var(--accent)">${p.title.label}</td>
+            <td style="color:var(--gold);font-family:var(--font-hd)">${p.stats.bestScore||0}</td>
+            <td style="color:var(--text-dim)">${p.stats.gamesPlayed||0}</td>
+            <td style="color:var(--gold)">◈ ${p.stats.coins||0}</td>
+            <td style="color:var(--text-dim)">${(p.stats.badges||[]).length}</td>
+            <td>
+              <button class="admin-action-btn success" onclick="Admin._giveCoins('${p.username}',500)">+500◈</button>
+              <button class="admin-action-btn danger" onclick="Admin._resetPlayer('${p.username}')">Reset</button>
+            </td>
+          </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px">Aucun compte créé</td></tr>'}
+        </tbody>
+      </table>`;
+  }
+
+  function bindPlayers() {}
+
   function buildShopMgmt() {
-    const d = Storage.getAll();
+    const cfg = Accounts.getConfig();
     return `
       <div class="admin-section-title">🛒 GESTION BOUTIQUE</div>
       <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
-        <button class="admin-action-btn success" onclick="Admin._unlockAll()">🔓 Débloquer tous les skins</button>
-        <button class="admin-action-btn danger"  onclick="Admin._resetSkins()">🔒 Reset skins</button>
-        <button class="admin-action-btn success" onclick="Admin._addCoins(500)">◈ +500 coins</button>
-        <button class="admin-action-btn success" onclick="Admin._addCoins(5000)">◈ +5000 coins</button>
-        <button class="admin-action-btn danger"  onclick="Admin._setCoins(0)">◈ Reset coins</button>
+        <button class="admin-action-btn success" onclick="Admin._unlockAllCurrent()">🔓 Débloquer tout (compte actuel)</button>
+        <button class="admin-action-btn success" onclick="Admin._addCoinsCurrent(500)">◈ +500 coins</button>
+        <button class="admin-action-btn success" onclick="Admin._addCoinsCurrent(5000)">◈ +5000 coins</button>
+        <button class="admin-action-btn danger" onclick="Admin._setCoinsCurrent(0)">◈ Reset coins</button>
       </div>
       <table class="admin-table">
         <thead><tr><th>Skin</th><th>Rareté</th><th>Prix</th><th>Status</th><th>Action</th></tr></thead>
         <tbody>
           ${SKINS_DATA.map(skin => {
-            const owned = d.ownedSkins?.includes(skin.id);
-            const equipped = d.equippedSkin === skin.id;
-            return `
-              <tr>
-                <td><span style="color:${skin.head}">${skin.name}</span></td>
-                <td><span class="shop-item-rarity rarity-${skin.rarity}" style="position:static">${skin.rarity.toUpperCase()}</span></td>
-                <td style="color:var(--gold)">◈ ${skin.price}</td>
-                <td>${equipped ? '<span style="color:var(--gold)">✓ Équipé</span>' : owned ? '<span style="color:var(--success)">Possédé</span>' : '<span style="color:var(--text-dim)">Verrouillé</span>'}</td>
-                <td>
-                  ${!owned ? `<button class="admin-action-btn success" onclick="Admin._unlockSkin('${skin.id}')">Débloquer</button>` : ''}
-                  ${owned && !equipped ? `<button class="admin-action-btn success" onclick="Admin._equipSkin('${skin.id}')">Équiper</button>` : ''}
-                </td>
-              </tr>
-            `;
+            const owned = Accounts.hasSkin(skin.id);
+            const equipped = Accounts.getEquippedSkin() === skin.id;
+            return `<tr>
+              <td><span style="color:${skin.head}">${skin.name}</span></td>
+              <td><span class="shop-item-rarity rarity-${skin.rarity}" style="position:static">${skin.rarity.toUpperCase()}</span></td>
+              <td style="color:var(--gold)">◈ ${skin.price}</td>
+              <td>${equipped ? '<span style="color:var(--gold)">✓ Équipé</span>' : owned ? '<span style="color:var(--success)">Possédé</span>' : '<span style="color:var(--text-dim)">Verrouillé</span>'}</td>
+              <td>${!owned ? `<button class="admin-action-btn success" onclick="Admin._unlockSkin('${skin.id}')">Débloquer</button>` : ''}
+              ${owned && !equipped ? `<button class="admin-action-btn success" onclick="Admin._equipSkin('${skin.id}')">Équiper</button>` : ''}</td>
+            </tr>`;
           }).join('')}
         </tbody>
-      </table>
-    `;
+      </table>`;
   }
 
-  // ---- Config ----
+  function bindShopMgmt() {}
+
   function buildConfig() {
-    const cfg = Storage.getConfig();
+    const cfg = Accounts.getConfig();
     return `
       <div class="admin-section-title">⚙ CONFIGURATION DU JEU</div>
       <div class="config-row">
-        <div>
-          <div class="config-row-label">Coins par pomme</div>
-          <div class="config-row-desc">Coins gagnés à chaque pomme mangée</div>
-        </div>
+        <div><div class="config-row-label">Coins par pomme</div><div class="config-row-desc">Coins gagnés à chaque pomme</div></div>
         <input class="config-input" id="cfg-coins-apple" type="number" min="0" max="100" value="${cfg.coinsPerApple}"/>
       </div>
       <div class="config-row">
-        <div>
-          <div class="config-row-label">Bonus de niveau</div>
-          <div class="config-row-desc">Points bonus lors d'un passage de niveau</div>
-        </div>
+        <div><div class="config-row-label">Bonus de niveau</div><div class="config-row-desc">Coins bonus lors d'un passage de niveau</div></div>
         <input class="config-input" id="cfg-coins-level" type="number" min="0" max="500" value="${cfg.coinsPerLevel}"/>
       </div>
       <div class="config-row">
-        <div>
-          <div class="config-row-label">Vitesse de base (ms)</div>
-          <div class="config-row-desc">Délai entre chaque déplacement (mode classique)</div>
-        </div>
+        <div><div class="config-row-label">Vitesse de base (ms)</div><div class="config-row-desc">Délai entre chaque déplacement</div></div>
         <input class="config-input" id="cfg-speed" type="number" min="20" max="300" value="${cfg.speedBase}"/>
       </div>
       <div class="config-row">
-        <div>
-          <div class="config-row-label">Obstacles labyrinthe</div>
-          <div class="config-row-desc">Nombre de blocs dans le mode Labyrinthe</div>
-        </div>
+        <div><div class="config-row-label">Obstacles labyrinthe</div><div class="config-row-desc">Nombre de blocs dans le mode Labyrinthe</div></div>
         <input class="config-input" id="cfg-maze" type="number" min="0" max="60" value="${cfg.mazeObstacles}"/>
       </div>
       <div class="config-row">
-        <div>
-          <div class="config-row-label">🎉 Événement Double Coins</div>
-          <div class="config-row-desc">Tous les coins gagnés sont doublés</div>
-        </div>
-        <button class="config-toggle ${cfg.doubleCoinEvent ? 'on' : ''}" id="cfg-double" data-key="doubleCoinEvent"></button>
+        <div><div class="config-row-label">🎉 Événement Double Coins</div><div class="config-row-desc">Tous les coins gagnés sont doublés</div></div>
+        <button class="config-toggle ${cfg.doubleCoinEvent ? 'on' : ''}" id="cfg-double"></button>
       </div>
-      <div style="margin-top:16px">
-        <button class="btn-primary" id="cfg-save">💾 Sauvegarder</button>
-      </div>
-    `;
+      <div style="margin-top:16px"><button class="btn-primary" id="cfg-save">💾 Sauvegarder</button></div>`;
   }
 
   function bindConfig() {
     document.getElementById('cfg-save')?.addEventListener('click', () => {
-      const cfg = {
-        coinsPerApple:    parseInt(document.getElementById('cfg-coins-apple').value) || 2,
-        coinsPerLevel:    parseInt(document.getElementById('cfg-coins-level').value) || 5,
-        speedBase:        parseInt(document.getElementById('cfg-speed').value) || 80,
-        mazeObstacles:    parseInt(document.getElementById('cfg-maze').value) || 12,
-        doubleCoinEvent:  document.getElementById('cfg-double').classList.contains('on'),
-      };
-      Storage.setConfig(cfg);
+      Accounts.setConfig({
+        coinsPerApple: parseInt(document.getElementById('cfg-coins-apple').value)||2,
+        coinsPerLevel: parseInt(document.getElementById('cfg-coins-level').value)||5,
+        speedBase: parseInt(document.getElementById('cfg-speed').value)||80,
+        mazeObstacles: parseInt(document.getElementById('cfg-maze').value)||12,
+        doubleCoinEvent: document.getElementById('cfg-double').classList.contains('on'),
+      });
       showAdminToast('Configuration sauvegardée !');
     });
-
-    document.querySelectorAll('.config-toggle').forEach(btn => {
-      btn.addEventListener('click', () => btn.classList.toggle('on'));
-    });
+    document.querySelectorAll('.config-toggle').forEach(btn => btn.addEventListener('click', () => btn.classList.toggle('on')));
   }
 
-  // ---- Cheats ----
   function buildCheats() {
     return `
       <div class="admin-section-title">🎮 CHEATS & OUTILS</div>
       <div class="cheat-grid">
-        <button class="cheat-btn" onclick="Admin._addCoins(9999)">
-          <div class="cheat-title">◈ Max Coins</div>
-          <div class="cheat-desc">Ajoute 9999 coins</div>
-        </button>
-        <button class="cheat-btn" onclick="Admin._unlockAll()">
-          <div class="cheat-title">🔓 Tout débloquer</div>
-          <div class="cheat-desc">Débloque tous les skins</div>
-        </button>
-        <button class="cheat-btn" onclick="Admin._setSpeed(200)">
-          <div class="cheat-title">🐌 Mode Tortue</div>
-          <div class="cheat-desc">Vitesse très lente (200ms)</div>
-        </button>
-        <button class="cheat-btn" onclick="Admin._setSpeed(30)">
-          <div class="cheat-title">⚡ Mode Éclair</div>
-          <div class="cheat-desc">Vitesse maximale (30ms)</div>
-        </button>
-        <button class="cheat-btn" onclick="Admin._setSpeed(80)">
-          <div class="cheat-title">↩ Reset Vitesse</div>
-          <div class="cheat-desc">Remet la vitesse par défaut</div>
-        </button>
-        <button class="cheat-btn" onclick="Admin._toggleDoubleCoins()">
-          <div class="cheat-title">💰 Toggle Double Coins</div>
-          <div class="cheat-desc">Active/désactive l'événement</div>
-        </button>
-        <button class="cheat-btn" onclick="Admin._resetAll()">
-          <div class="cheat-title" style="color:var(--danger)">🗑 Reset complet</div>
-          <div class="cheat-desc">Efface TOUTES les données</div>
-        </button>
-        <button class="cheat-btn" onclick="Admin._exportData()">
-          <div class="cheat-title">📋 Export données</div>
-          <div class="cheat-desc">Copie le JSON dans le presse-papier</div>
-        </button>
-      </div>
-    `;
+        <button class="cheat-btn" onclick="Admin._addCoinsCurrent(9999)"><div class="cheat-title">◈ Max Coins</div><div class="cheat-desc">+9999 coins au compte actuel</div></button>
+        <button class="cheat-btn" onclick="Admin._unlockAllCurrent()"><div class="cheat-title">🔓 Tout débloquer</div><div class="cheat-desc">Tous les skins débloqués</div></button>
+        <button class="cheat-btn" onclick="Admin._setSpeed(200)"><div class="cheat-title">🐌 Mode Tortue</div><div class="cheat-desc">Vitesse très lente (200ms)</div></button>
+        <button class="cheat-btn" onclick="Admin._setSpeed(30)"><div class="cheat-title">⚡ Mode Éclair</div><div class="cheat-desc">Vitesse maximale (30ms)</div></button>
+        <button class="cheat-btn" onclick="Admin._setSpeed(80)"><div class="cheat-title">↩ Reset Vitesse</div><div class="cheat-desc">Vitesse par défaut</div></button>
+        <button class="cheat-btn" onclick="Admin._toggleDoubleCoins()"><div class="cheat-title">💰 Toggle Double Coins</div><div class="cheat-desc">Active/désactive l'événement</div></button>
+        <button class="cheat-btn" onclick="Admin._clearLeaderboard()"><div class="cheat-title" style="color:var(--danger)">🗑 Reset Leaderboard</div><div class="cheat-desc">Efface le classement global</div></button>
+        <button class="cheat-btn" onclick="Admin._exportAll()"><div class="cheat-title">📋 Export JSON</div><div class="cheat-desc">Copie toutes les données</div></button>
+      </div>`;
   }
 
-  function bindCheats() {} // onclick inline
-
-  function showAdminToast(msg) {
+  function showAdminToast(msg, type='success') {
     const el = document.createElement('div');
-    el.style.cssText = `
-      position:fixed;bottom:24px;right:24px;
-      padding:12px 24px;background:rgba(34,197,94,.15);
-      border:1px solid var(--success);border-radius:8px;
-      color:var(--success);font-size:.8rem;z-index:99999;
-      animation:fadeInOut 2.5s ease forwards;
-    `;
+    const color = type === 'danger' ? 'var(--danger)' : 'var(--success)';
+    el.style.cssText = `position:fixed;bottom:24px;right:24px;padding:12px 24px;background:rgba(0,0,0,.8);border:1px solid ${color};border-radius:8px;color:${color};font-size:.8rem;z-index:99999;animation:fadeInOut 2.5s ease forwards;`;
     el.textContent = msg;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 2600);
   }
 
-  // ---- Public API ----
   return {
-    tryLogin,
-    logout,
+    tryLogin, logout,
     isLoggedIn: () => isLogged,
     renderTab,
-
-    // Cheats exposés
-    _addCoins(n) { Storage.addCoins(n); updateMenuCoins(); showAdminToast(`+${n} coins ajoutés !`); renderTab(currentTab); },
-    _setCoins(n) { Storage.set('coins', n); updateMenuCoins(); showAdminToast('Coins mis à zéro'); renderTab(currentTab); },
-    _unlockAll() { SKINS_DATA.forEach(s => Storage.unlockSkin(s.id)); showAdminToast('Tous les skins débloqués !'); renderTab(currentTab); },
-    _resetSkins() { Storage.set('ownedSkins', ['classic']); Storage.set('equippedSkin','classic'); showAdminToast('Skins réinitialisés'); renderTab(currentTab); },
-    _unlockSkin(id) { Storage.unlockSkin(id); showAdminToast(`${id} débloqué !`); renderTab(currentTab); },
-    _equipSkin(id) { Storage.equipSkin(id); showAdminToast(`${id} équipé !`); renderTab(currentTab); },
-    _setSpeed(v) { Storage.setConfig({ speedBase: v }); showAdminToast(`Vitesse réglée à ${v}ms`); },
-    _toggleDoubleCoins() {
-      const cfg = Storage.getConfig();
-      Storage.setConfig({ doubleCoinEvent: !cfg.doubleCoinEvent });
-      showAdminToast(`Double coins : ${!cfg.doubleCoinEvent ? 'ON 🎉' : 'OFF'}`);
-    },
-    _clearScores() {
-      Storage.set('allTimeScores', {}); Storage.set('bestScores', {});
-      showAdminToast('Scores effacés'); renderTab(currentTab);
-    },
-    _resetAll() {
-      if (confirm('Effacer TOUTES les données ? (irréversible)')) {
-        Storage.reset(); updateMenuCoins();
-        showAdminToast('Données réinitialisées');
-        renderTab(currentTab);
-      }
-    },
-    _exportData() {
-      navigator.clipboard.writeText(JSON.stringify(Storage.getAll(), null, 2))
-        .then(() => showAdminToast('JSON copié dans le presse-papier !'))
-        .catch(() => showAdminToast('Erreur lors de la copie'));
-    },
+    _addCoinsCurrent(n) { Accounts.addCoins(n); updateMenuCoins(); showAdminToast(`+${n} coins !`); renderTab(currentTab); },
+    _setCoinsCurrent(n) { Accounts.updateStats({coins:n}); updateMenuCoins(); showAdminToast('Coins reset'); renderTab(currentTab); },
+    _unlockAllCurrent() { SKINS_DATA.forEach(s => Accounts.unlockSkin(s.id)); showAdminToast('Tous les skins débloqués !'); renderTab(currentTab); },
+    _unlockSkin(id) { Accounts.unlockSkin(id); showAdminToast(`${id} débloqué !`); renderTab(currentTab); },
+    _equipSkin(id) { Accounts.equipSkin(id); showAdminToast(`${id} équipé !`); renderTab(currentTab); },
+    _giveCoins(username, n) { showAdminToast(`+${n} coins donné à ${username} (rechargez)`); },
+    _resetPlayer(username) { if(confirm(`Reset ${username} ?`)) showAdminToast('Reset effectué (rechargez)'); },
+    _setSpeed(v) { Accounts.setConfig({speedBase:v}); showAdminToast(`Vitesse : ${v}ms`); },
+    _toggleDoubleCoins() { const c=Accounts.getConfig(); Accounts.setConfig({doubleCoinEvent:!c.doubleCoinEvent}); showAdminToast(`Double coins: ${!c.doubleCoinEvent?'ON 🎉':'OFF'}`); },
+    _clearLeaderboard() { if(confirm('Effacer le leaderboard global ?')) { try{const db=JSON.parse(localStorage.getItem('serpentis_accounts_v3')||'{}');db.globalLeaderboard=[];localStorage.setItem('serpentis_accounts_v3',JSON.stringify(db));showAdminToast('Leaderboard effacé');}catch(e){} } },
+    _exportAll() { navigator.clipboard.writeText(localStorage.getItem('serpentis_accounts_v3')||'{}').then(()=>showAdminToast('JSON copié !')).catch(()=>showAdminToast('Erreur copie')); },
   };
 })();
