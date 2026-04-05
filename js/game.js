@@ -101,6 +101,7 @@ const Game = (() => {
     lastStep = performance.now();
     gameStartTime = performance.now();
     requestAnimationFrame(loop);
+  }
 
   // ---- GRID MODES ----
   function initGrid() {
